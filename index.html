@@ -3,31 +3,69 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="AI-powered Skill Matching Application – compare job descriptions with candidate profiles instantly." />
-    <title>SkillMatch AI – Skill Matching Application</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <meta name="description" content="VISYS SkillMatch – AI-powered skill gap analysis. Compare job descriptions with candidate profiles instantly." />
+    <title>VISYS SkillMatch – Intelligent Skill Gap Analysis</title>
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <!-- Animated background orbs -->
-    <div class="bg-orb bg-orb--1"></div>
-    <div class="bg-orb bg-orb--2"></div>
-    <div class="bg-orb bg-orb--3"></div>
+    <!-- Network constellation background -->
+    <canvas id="networkCanvas"></canvas>
+    <div class="bg-gradient-overlay"></div>
+
+    <!-- Top Navbar -->
+    <nav class="navbar" id="navbar">
+        <a href="#" class="navbar__brand">
+            <div class="navbar__logo-icon">V</div>
+            <div>
+                <div class="navbar__name">VISYS <span class="navbar__name-accent">SkillMatch</span></div>
+                <div class="navbar__tagline">Cloud Technologies</div>
+            </div>
+        </a>
+        <div class="navbar__right">
+            <a href="#form-section" class="navbar__link">Analyze</a>
+            <a href="#results" class="navbar__link">Results</a>
+            <button class="navbar__cta" onclick="document.getElementById('jobDescription').focus()">Get Started</button>
+        </div>
+    </nav>
 
     <div class="app">
-        <!-- Header -->
-        <header class="header">
-            <div class="header__logo">
-                <span class="header__icon">⚡</span>
-                <h1 class="header__title">SkillMatch <span class="header__highlight">AI</span></h1>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero__badge">
+                <span class="hero__badge-dot"></span>
+                AI-Powered Skill Analysis
             </div>
-            <p class="header__subtitle">Intelligent skill gap analysis powered by NLP</p>
-        </header>
+            <h1 class="hero__title">
+                Intelligent <span class="hero__title-accent">Skill Matching</span><br />
+                & Gap Analysis
+            </h1>
+            <p class="hero__subtitle">
+                We empower your hiring journey with trusted AI expertise and dependable skill matching,
+                ensuring the right candidate every time.
+            </p>
 
-        <!-- Input Section -->
-        <main class="main">
+            <div class="hero__stats">
+                <div class="stat">
+                    <div class="stat__number">150<span>+</span></div>
+                    <div class="stat__label">Known Skills</div>
+                </div>
+                <div class="stat">
+                    <div class="stat__number">99<span>.9%</span></div>
+                    <div class="stat__label">Accuracy</div>
+                </div>
+                <div class="stat">
+                    <div class="stat__number">&lt;1<span>s</span></div>
+                    <div class="stat__label">Analysis Time</div>
+                </div>
+                <div class="stat">
+                    <div class="stat__number">NLP<span>+</span></div>
+                    <div class="stat__label">Dynamic Extraction</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Form Section -->
+        <section class="form-section" id="form-section">
             <form id="matchForm" class="form">
                 <div class="form__grid">
                     <!-- Job Description -->
@@ -39,7 +77,7 @@
                         <textarea
                             id="jobDescription"
                             class="form__textarea"
-                            placeholder="Paste the job description here...&#10;&#10;Example: We are looking for a Python developer with experience in Django, REST APIs, Docker, and PostgreSQL..."
+                            placeholder="Paste the job description here...&#10;&#10;Example: We are looking for a Cloud Engineer with AWS EC2, S3, Lambda, IAM, CloudFormation..."
                             rows="10"
                             required
                         ></textarea>
@@ -54,7 +92,7 @@
                         <textarea
                             id="candidateProfile"
                             class="form__textarea"
-                            placeholder="Paste the candidate's resume or profile here...&#10;&#10;Example: Experienced software engineer with 3 years of Python, Flask, PostgreSQL, and Git..."
+                            placeholder="Paste the candidate's resume or profile here...&#10;&#10;Example: 5 years experience with AWS EC2, S3, Docker, Kubernetes, Terraform..."
                             rows="10"
                             required
                         ></textarea>
@@ -63,61 +101,59 @@
 
                 <button type="submit" id="submitBtn" class="btn btn--primary">
                     <span class="btn__text">Analyze Match</span>
-                    <span class="btn__icon">🚀</span>
-                    <!-- Spinner (hidden by default) -->
+                    <span class="btn__icon">→</span>
                     <span class="btn__spinner" id="spinner"></span>
                 </button>
             </form>
+        </section>
 
-            <!-- Error Message -->
-            <div id="errorMessage" class="error-message" style="display: none;"></div>
+        <!-- Error -->
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
 
-            <!-- Results Section (hidden until analysis completes) -->
-            <section id="results" class="results" style="display: none;">
-                <h2 class="results__heading">📊 Analysis Results</h2>
+        <!-- Results -->
+        <section id="results" class="results" style="display: none;">
+            <h2 class="results__heading">📊 Analysis <span>Results</span></h2>
 
-                <!-- Score Card -->
-                <div class="score-card">
-                    <div class="score-card__ring">
-                        <svg viewBox="0 0 120 120" class="score-card__svg">
-                            <circle cx="60" cy="60" r="52" class="score-card__track" />
-                            <circle cx="60" cy="60" r="52" class="score-card__progress" id="scoreCircle" />
-                        </svg>
-                        <span class="score-card__value" id="scoreValue">0%</span>
-                    </div>
-                    <p class="score-card__label">Match Score</p>
+            <!-- Score Ring -->
+            <div class="score-card">
+                <div class="score-card__ring">
+                    <svg viewBox="0 0 120 120" class="score-card__svg">
+                        <circle cx="60" cy="60" r="52" class="score-card__track" />
+                        <circle cx="60" cy="60" r="52" class="score-card__progress" id="scoreCircle" />
+                    </svg>
+                    <span class="score-card__value" id="scoreValue">0%</span>
                 </div>
+                <p class="score-card__label">Match Score</p>
+            </div>
 
-                <!-- Skills Grid -->
-                <div class="skills-grid">
-                    <!-- Matched Skills -->
-                    <div class="skills-card skills-card--matched">
-                        <h3 class="skills-card__title">
-                            <span class="skills-card__icon">✅</span> Matched Skills
-                        </h3>
-                        <div class="skills-card__tags" id="matchedSkills"></div>
-                    </div>
-
-                    <!-- Missing Skills -->
-                    <div class="skills-card skills-card--missing">
-                        <h3 class="skills-card__title">
-                            <span class="skills-card__icon">❌</span> Missing Skills
-                        </h3>
-                        <div class="skills-card__tags" id="missingSkills"></div>
-                    </div>
+            <!-- Skills Grid -->
+            <div class="skills-grid">
+                <div class="skills-card skills-card--matched">
+                    <h3 class="skills-card__title">
+                        <span class="skills-card__icon">✅</span> Matched Skills
+                        <span class="skills-card__count" id="matchedCount">0</span>
+                    </h3>
+                    <div class="skills-card__tags" id="matchedSkills"></div>
                 </div>
-
-                <!-- Summary -->
-                <div class="summary-card" id="summaryCard">
-                    <h3 class="summary-card__title">💡 Summary</h3>
-                    <p class="summary-card__text" id="summaryText"></p>
+                <div class="skills-card skills-card--missing">
+                    <h3 class="skills-card__title">
+                        <span class="skills-card__icon">❌</span> Missing Skills
+                        <span class="skills-card__count" id="missingCount">0</span>
+                    </h3>
+                    <div class="skills-card__tags" id="missingSkills"></div>
                 </div>
-            </section>
-        </main>
+            </div>
+
+            <!-- Summary -->
+            <div class="summary-card" id="summaryCard">
+                <h3 class="summary-card__title">💡 Summary</h3>
+                <p class="summary-card__text" id="summaryText"></p>
+            </div>
+        </section>
 
         <!-- Footer -->
         <footer class="footer">
-            <p>Built with ❤️ using FastAPI &amp; Vanilla JS</p>
+            <p>Built with ❤️ by <a href="#">VISYS Cloud Technologies</a> &middot; Powered by FastAPI &amp; NLP</p>
         </footer>
     </div>
 

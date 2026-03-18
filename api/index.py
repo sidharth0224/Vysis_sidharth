@@ -4,11 +4,14 @@ from pydantic import BaseModel
 import re
 import os
 import nltk
+from nltk.tokenize import word_tokenize
 
 nltk.data.path.append("/tmp/nltk_data")
 nltk.download("punkt", download_dir="/tmp/nltk_data", quiet=True)
 nltk.download("punkt_tab", download_dir="/tmp/nltk_data", quiet=True)
 nltk.download("stopwords", download_dir="/tmp/nltk_data", quiet=True)
+nltk.download("averaged_perceptron_tagger", download_dir="/tmp/nltk_data", quiet=True)
+nltk.download("averaged_perceptron_tagger_eng", download_dir="/tmp/nltk_data", quiet=True)
 
 from nltk.corpus import stopwords
 
@@ -85,12 +88,151 @@ SKILLS_DATABASE: list[str] = [
 SKILLS_DATABASE.sort(key=lambda s: len(s), reverse=True)
 STOP_WORDS = set(stopwords.words("english"))
 
+# ── Non-skill stop words: generic verbs, adjectives, filler words ─────────
+NON_SKILL_WORDS: set[str] = {
+    # common verbs / verb forms
+    "looking", "seeking", "hiring", "required", "preferred", "must",
+    "should", "will", "need", "needs", "work", "working", "worked",
+    "build", "building", "built", "create", "creating", "design",
+    "designing", "develop", "developing", "developed", "manage",
+    "managing", "managed", "lead", "leading", "ensure", "ensuring",
+    "support", "supporting", "maintain", "maintaining", "implement",
+    "implementing", "deliver", "delivering", "drive", "driving",
+    "collaborate", "collaborating", "communicate", "communicating",
+    "provide", "providing", "understand", "understanding", "apply",
+    "applying", "use", "using", "used", "help", "helping",
+    "contribute", "contributing", "participate", "participating",
+    "identify", "identifying", "improve", "improving", "analyze",
+    "analyzing", "define", "defining", "review", "reviewing",
+    "write", "writing", "test", "testing", "debug", "debugging",
+    "deploy", "deploying", "monitor", "monitoring", "optimize",
+    "optimizing", "operate", "operating", "run", "running",
+    "perform", "performing", "track", "tracking", "report",
+    "reporting", "plan", "planning", "research", "researching",
+    "evaluate", "evaluating", "establish", "establishing",
+    "integrate", "integrating", "assist", "assisting",
+    "join", "joining", "grow", "growing",
+    # generic nouns / filler
+    "experience", "experiences", "ability", "abilities", "skill",
+    "skills", "knowledge", "team", "teams", "role", "roles",
+    "position", "positions", "company", "companies", "organization",
+    "organizations", "environment", "environments", "solution",
+    "solutions", "service", "services", "system", "systems",
+    "platform", "platforms", "product", "products", "project",
+    "projects", "process", "processes", "tool", "tools",
+    "technology", "technologies", "application", "applications",
+    "client", "clients", "customer", "customers", "user", "users",
+    "stakeholder", "stakeholders", "partner", "partners",
+    "candidate", "candidates", "member", "members", "level",
+    "levels", "area", "areas", "field", "fields", "industry",
+    "industries", "market", "markets", "business", "opportunity",
+    "opportunities", "requirement", "requirements", "responsibility",
+    "responsibilities", "qualification", "qualifications",
+    "benefit", "benefits", "year", "years", "month", "months",
+    "day", "days", "time", "practice", "practices", "standard",
+    "standards", "framework", "frameworks", "model", "models",
+    "approach", "approaches", "strategy", "strategies",
+    "performance", "quality", "feature", "features", "function",
+    "functions", "component", "components", "resource", "resources",
+    "infrastructure", "code", "data", "information", "result",
+    "results", "goal", "goals", "objective", "objectives",
+    "value", "values", "growth", "success", "impact",
+    "change", "changes", "issue", "issues", "problem", "problems",
+    "task", "tasks", "activity", "activities", "effort", "efforts",
+    "detail", "details", "example", "examples", "type", "types",
+    "range", "part", "parts", "set", "sets", "way", "ways",
+    "base", "end", "order", "case", "cases", "hand", "number",
+    "group", "groups", "line", "lines", "point", "points",
+    "step", "steps", "state", "form", "name", "key", "top",
+    "new", "high", "low", "good", "best", "etc", "plus",
+    # adjectives / adverbs
+    "strong", "excellent", "good", "great", "deep", "solid",
+    "proven", "hands-on", "extensive", "minimum", "maximum",
+    "preferred", "desired", "ideal", "relevant", "similar",
+    "various", "multiple", "complex", "large", "small",
+    "fast", "quick", "efficient", "effective", "responsible",
+    "able", "capable", "familiar", "proficient", "experienced",
+    "additional", "full", "remote", "hybrid", "onsite",
+    # misc
+    "salary", "compensation", "bonus", "equity", "location",
+    "job", "description", "title", "summary", "overview",
+    "profile", "resume", "cv", "cover", "letter",
+    "degree", "bachelor", "bachelors", "master", "masters",
+    "phd", "certification", "certified", "equivalent",
+    "engineering", "science", "computer", "mathematics",
+    "related", "including", "include", "includes",
+    "across", "within", "around", "also", "well",
+    # role titles / generic labels
+    "engineer", "developer", "manager", "analyst", "architect",
+    "consultant", "specialist", "administrator", "coordinator",
+    "director", "officer", "intern", "trainee", "junior",
+    "senior", "staff", "principal", "head", "chief",
+    "software", "hardware", "web", "cloud", "mobile",
+    "frontend", "backend", "fullstack", "full-stack",
+    "years", "experience", "methodology", "structures",
+    "apis", "rate", "media", "content", "social",
+    "manager role", "software engineer", "years experience",
+    "cloud engineer", "data engineer", "devops engineer",
+}
+
 
 def preprocess_text(text: str) -> str:
     text = text.lower()
     text = re.sub(r"[\n\r\t]+", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
     return text
+
+
+def extract_skills_dynamic(text: str) -> set[str]:
+    """
+    Use POS tagging to extract noun-phrase skill candidates
+    that are NOT in the hardcoded SKILLS_DATABASE.
+    """
+    processed = preprocess_text(text)
+    tokens = word_tokenize(processed)
+    tagged = nltk.pos_tag(tokens)
+
+    noun_tags = {"NN", "NNS", "NNP", "NNPS"}
+
+    chunks: list[str] = []
+    current_chunk: list[str] = []
+
+    for token, tag in tagged:
+        if tag in noun_tags:
+            current_chunk.append(token)
+        else:
+            if current_chunk:
+                chunks.append(" ".join(current_chunk))
+                current_chunk = []
+    if current_chunk:
+        chunks.append(" ".join(current_chunk))
+
+    expanded: list[str] = []
+    for chunk in chunks:
+        expanded.append(chunk)
+        parts = chunk.split()
+        if len(parts) > 1:
+            expanded.extend(parts)
+
+    known_lower = {s.lower() for s in SKILLS_DATABASE}
+    all_stop = STOP_WORDS | NON_SKILL_WORDS
+
+    dynamic_skills: set[str] = set()
+    for phrase in expanded:
+        normalized = phrase.strip().lower()
+
+        if len(normalized) <= 1 or normalized.isdigit():
+            continue
+
+        if normalized in all_stop:
+            continue
+
+        if normalized in known_lower:
+            continue
+
+        dynamic_skills.add(normalized)
+
+    return dynamic_skills
 
 
 def extract_skills(text: str) -> set[str]:
@@ -116,6 +258,11 @@ def extract_skills(text: str) -> set[str]:
     normalized: set[str] = set()
     for skill in found_skills:
         normalized.add(aliases.get(skill, skill))
+
+    # ── Merge dynamically extracted skills ──
+    dynamic = extract_skills_dynamic(text)
+    normalized.update(dynamic)
+
     return normalized
 
 
