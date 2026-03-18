@@ -5,3 +5,5 @@ __pycache__/
 node_modules/
 .vercel/
 nltk_data/
+
+.vercel
