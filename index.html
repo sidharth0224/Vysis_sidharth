@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="AI-powered Skill Matching Application – compare job descriptions with candidate profiles instantly." />
+    <title>SkillMatch AI – Skill Matching Application</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <!-- Animated background orbs -->
+    <div class="bg-orb bg-orb--1"></div>
+    <div class="bg-orb bg-orb--2"></div>
+    <div class="bg-orb bg-orb--3"></div>
+
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header__logo">
+                <span class="header__icon">⚡</span>
+                <h1 class="header__title">SkillMatch <span class="header__highlight">AI</span></h1>
+            </div>
+            <p class="header__subtitle">Intelligent skill gap analysis powered by NLP</p>
+        </header>
+
+        <!-- Input Section -->
+        <main class="main">
+            <form id="matchForm" class="form">
+                <div class="form__grid">
+                    <!-- Job Description -->
+                    <div class="form__group">
+                        <label for="jobDescription" class="form__label">
+                            <span class="form__label-icon">📋</span>
+                            Job Description
+                        </label>
+                        <textarea
+                            id="jobDescription"
+                            class="form__textarea"
+                            placeholder="Paste the job description here...&#10;&#10;Example: We are looking for a Python developer with experience in Django, REST APIs, Docker, and PostgreSQL..."
+                            rows="10"
+                            required
+                        ></textarea>
+                    </div>
+
+                    <!-- Candidate Profile -->
+                    <div class="form__group">
+                        <label for="candidateProfile" class="form__label">
+                            <span class="form__label-icon">👤</span>
+                            Candidate Profile
+                        </label>
+                        <textarea
+                            id="candidateProfile"
+                            class="form__textarea"
+                            placeholder="Paste the candidate's resume or profile here...&#10;&#10;Example: Experienced software engineer with 3 years of Python, Flask, PostgreSQL, and Git..."
+                            rows="10"
+                            required
+                        ></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="btn btn--primary">
+                    <span class="btn__text">Analyze Match</span>
+                    <span class="btn__icon">🚀</span>
+                    <!-- Spinner (hidden by default) -->
+                    <span class="btn__spinner" id="spinner"></span>
+                </button>
+            </form>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+            <!-- Results Section (hidden until analysis completes) -->
+            <section id="results" class="results" style="display: none;">
+                <h2 class="results__heading">📊 Analysis Results</h2>
+
+                <!-- Score Card -->
+                <div class="score-card">
+                    <div class="score-card__ring">
+                        <svg viewBox="0 0 120 120" class="score-card__svg">
+                            <circle cx="60" cy="60" r="52" class="score-card__track" />
+                            <circle cx="60" cy="60" r="52" class="score-card__progress" id="scoreCircle" />
+                        </svg>
+                        <span class="score-card__value" id="scoreValue">0%</span>
+                    </div>
+                    <p class="score-card__label">Match Score</p>
+                </div>
+
+                <!-- Skills Grid -->
+                <div class="skills-grid">
+                    <!-- Matched Skills -->
+                    <div class="skills-card skills-card--matched">
+                        <h3 class="skills-card__title">
+                            <span class="skills-card__icon">✅</span> Matched Skills
+                        </h3>
+                        <div class="skills-card__tags" id="matchedSkills"></div>
+                    </div>
+
+                    <!-- Missing Skills -->
+                    <div class="skills-card skills-card--missing">
+                        <h3 class="skills-card__title">
+                            <span class="skills-card__icon">❌</span> Missing Skills
+                        </h3>
+                        <div class="skills-card__tags" id="missingSkills"></div>
+                    </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="summary-card" id="summaryCard">
+                    <h3 class="summary-card__title">💡 Summary</h3>
+                    <p class="summary-card__text" id="summaryText"></p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Built with ❤️ using FastAPI &amp; Vanilla JS</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
