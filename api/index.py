@@ -1,9 +1,3 @@
-"""
-Skill Matching API – Vercel Serverless Function
-=================================================
-Handles POST /api/match requests.
-"""
-
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -11,9 +5,6 @@ import re
 import os
 import nltk
 
-# ---------------------------------------------------------------------------
-# NLTK data – download to /tmp on Vercel (writable directory)
-# ---------------------------------------------------------------------------
 nltk.data.path.append("/tmp/nltk_data")
 nltk.download("punkt", download_dir="/tmp/nltk_data", quiet=True)
 nltk.download("punkt_tab", download_dir="/tmp/nltk_data", quiet=True)
@@ -21,9 +12,6 @@ nltk.download("stopwords", download_dir="/tmp/nltk_data", quiet=True)
 
 from nltk.corpus import stopwords
 
-# ---------------------------------------------------------------------------
-# FastAPI app setup
-# ---------------------------------------------------------------------------
 app = FastAPI(
     title="Skill Matching API",
     description="Compare job descriptions with candidate profiles",
@@ -38,9 +26,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---------------------------------------------------------------------------
-# Request / Response models
-# ---------------------------------------------------------------------------
+
 class MatchRequest(BaseModel):
     job_description: str
     candidate_profile: str
@@ -53,11 +39,7 @@ class MatchResponse(BaseModel):
     summary: str
 
 
-# ---------------------------------------------------------------------------
-# Curated skills database
-# ---------------------------------------------------------------------------
 SKILLS_DATABASE: list[str] = [
-    # Multi-word skills (3-grams first, then 2-grams)
     "natural language processing", "computer vision", "deep learning",
     "machine learning", "data science", "data analysis", "data engineering",
     "data visualization", "data mining", "data warehousing", "big data",
@@ -77,7 +59,6 @@ SKILLS_DATABASE: list[str] = [
     "react native", "node js", "node.js", "express js", "express.js",
     "vue js", "vue.js", "next js", "next.js", "nuxt js", "nuxt.js",
     "angular js", "asp.net",
-    # Single-word / short skills
     "python", "java", "javascript", "typescript", "c++", "c#", "ruby", "go",
     "golang", "rust", "swift", "kotlin", "scala", "r", "matlab", "php",
     "perl", "html", "css", "sass", "less", "sql", "nosql", "mysql",
@@ -105,12 +86,7 @@ SKILLS_DATABASE.sort(key=lambda s: len(s), reverse=True)
 STOP_WORDS = set(stopwords.words("english"))
 
 
-# ---------------------------------------------------------------------------
-# Helper functions
-# ---------------------------------------------------------------------------
-
 def preprocess_text(text: str) -> str:
-    """Lowercase, collapse whitespace, strip special chars."""
     text = text.lower()
     text = re.sub(r"[\n\r\t]+", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
@@ -118,7 +94,6 @@ def preprocess_text(text: str) -> str:
 
 
 def extract_skills(text: str) -> set[str]:
-    """Extract skills from text using greedy longest-match."""
     processed = preprocess_text(text)
     found_skills: set[str] = set()
 
@@ -130,7 +105,6 @@ def extract_skills(text: str) -> set[str]:
         if re.search(pattern, processed):
             found_skills.add(skill)
 
-    # Normalize aliases
     aliases = {
         "golang": "go", "k8s": "kubernetes", "sklearn": "scikit-learn",
         "ci cd": "ci/cd", "node js": "node.js", "express js": "express.js",
@@ -146,7 +120,6 @@ def extract_skills(text: str) -> set[str]:
 
 
 def generate_summary(matched: list[str], missing: list[str], percentage: float) -> str:
-    """Generate a human-readable summary based on the match results."""
     if percentage == 100:
         return (f"🎯 Perfect match! The candidate possesses all the required skills "
                 f"({', '.join(matched)}). Highly recommended for the role.")
@@ -167,19 +140,13 @@ def generate_summary(matched: list[str], missing: list[str], percentage: float) 
             f"{', '.join(missing[:6])}.")
 
 
-# ---------------------------------------------------------------------------
-# API Endpoints
-# ---------------------------------------------------------------------------
-
 @app.get("/api/match")
 def health():
-    """Health-check endpoint."""
     return {"status": "ok", "message": "Skill Matching API is running 🚀"}
 
 
 @app.post("/api/match")
 def match_skills(request: MatchRequest):
-    """Compare a job description with a candidate profile."""
     if not request.job_description.strip():
         raise HTTPException(status_code=400, detail="Job description cannot be empty.")
     if not request.candidate_profile.strip():

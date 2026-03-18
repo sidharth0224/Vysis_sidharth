@@ -1,16 +1,7 @@
-/**
- * SkillMatch AI – Frontend Logic
- * ================================
- * Handles form submission, API calls, and dynamic result rendering.
- */
-
-// ── Configuration ──────────────────────────────────────────────────
-// Auto-detect: use relative path on deployed Vercel, localhost for local dev
 const API_BASE_URL = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost"
     ? "http://127.0.0.1:8000"
     : "";
 
-// ── DOM References ─────────────────────────────────────────────────
 const form            = document.getElementById("matchForm");
 const submitBtn       = document.getElementById("submitBtn");
 const spinner         = document.getElementById("spinner");
@@ -24,15 +15,10 @@ const scoreValueEl    = document.getElementById("scoreValue");
 const scoreCircleEl   = document.getElementById("scoreCircle");
 const summaryTextEl   = document.getElementById("summaryText");
 
-// ── Constants ──────────────────────────────────────────────────────
-const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 52;  // r = 52 from the SVG
+const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * 52;
 
-// ── Event Listeners ────────────────────────────────────────────────
 form.addEventListener("submit", handleSubmit);
 
-/**
- * Handle form submission
- */
 async function handleSubmit(e) {
     e.preventDefault();
     hideError();
@@ -42,7 +28,6 @@ async function handleSubmit(e) {
     const jobDescription   = jobDescEl.value.trim();
     const candidateProfile = candidateEl.value.trim();
 
-    // Client-side validation
     if (!jobDescription || !candidateProfile) {
         showError("Please fill in both fields before analysing.");
         setLoading(false);
@@ -84,68 +69,43 @@ async function handleSubmit(e) {
     }
 }
 
-// ── Render Helpers ─────────────────────────────────────────────────
-
-/**
- * Render the full results section with matched/missing skills, score, and summary.
- */
 function renderResults(data) {
-    // 1. Matched skills tags
     matchedSkillsEl.innerHTML = data.matched_skills.length
         ? data.matched_skills.map((s, i) => skillTag(s, "matched", i)).join("")
         : '<span class="tag tag--none">No matching skills found</span>';
 
-    // 2. Missing skills tags
     missingSkillsEl.innerHTML = data.missing_skills.length
         ? data.missing_skills.map((s, i) => skillTag(s, "missing", i)).join("")
         : '<span class="tag tag--none">No missing skills – perfect match!</span>';
 
-    // 3. Score ring animation
     const percentage = parseFloat(data.match_percentage);
     animateScore(percentage);
 
-    // 4. Summary
     summaryTextEl.textContent = data.summary;
 
-    // Show section
     resultsSection.style.display = "block";
     resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-/**
- * Create an HTML skill tag string.
- */
 function skillTag(skill, type, index) {
-    const delay = index * 0.06; // stagger animation
+    const delay = index * 0.06;
     return `<span class="tag tag--${type}" style="animation-delay:${delay}s">${capitalize(skill)}</span>`;
 }
 
-/**
- * Animate the circular score indicator and the percentage text.
- */
 function animateScore(percentage) {
-    // Offset calculation: full circle = CIRCLE_CIRCUMFERENCE
     const offset = CIRCLE_CIRCUMFERENCE - (percentage / 100) * CIRCLE_CIRCUMFERENCE;
-
-    // Set gradient colour based on score
-    const hue = percentage * 1.2; // 0 → red, 120 → green
+    const hue = percentage * 1.2;
     scoreCircleEl.style.stroke = `hsl(${hue}, 80%, 55%)`;
     scoreCircleEl.style.strokeDashoffset = offset;
-
-    // Animate the number
     animateCounter(scoreValueEl, 0, percentage, 1000);
 }
 
-/**
- * Smoothly count from `start` to `end` over `duration` ms.
- */
 function animateCounter(element, start, end, duration) {
     const startTime = performance.now();
 
     function update(currentTime) {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        // Ease-out quad
         const eased = 1 - (1 - progress) * (1 - progress);
         const current = Math.round(start + (end - start) * eased);
         element.textContent = `${current}%`;
@@ -157,8 +117,6 @@ function animateCounter(element, start, end, duration) {
 
     requestAnimationFrame(update);
 }
-
-// ── UI State Helpers ───────────────────────────────────────────────
 
 function setLoading(isLoading) {
     submitBtn.disabled = isLoading;
